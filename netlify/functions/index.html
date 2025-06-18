@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Kingdom Time Audit</title>
+    
+    <style>
+        /* All CSS is the same as the previous version. */
+        body { font-family: 'Poppins', sans-serif; background-color: #F5F3E8; color: #1c1c1a; margin: 0; padding: 0; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background-color: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .nav-brand { font-size: 1.5rem; font-weight: 700; color: #3F6994; }
+        .nav-links a { margin: 0 1rem; text-decoration: none; color: #1c1c1a; font-weight: 600; cursor: pointer; transition: color 0.3s ease; }
+        .nav-links a:hover, .nav-links a.active { color: #3F6994; }
+        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .btn-primary { background-color: #3F6994; color: #ffffff; }
+        .btn-secondary { background-color: #3C4E42; color: #ffffff; }
+        .btn-danger { background-color: #e74c3c; color: #ffffff; }
+        .btn-small { padding: 0.3rem 0.6rem; font-size: 0.8rem; margin-left: 0.25rem; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+        .page-header { text-align: center; margin-bottom: 2rem; }
+        .charts-container { display: flex; justify-content: space-around; gap: 2rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .chart-card { background-color: #ffffff; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); flex: 1; min-width: 300px; text-align: center; }
+        .chart-canvas-container { position: relative; height: 300px; width: 100%; }
+        .opportunity-card { background: linear-gradient(135deg, #3F6994, #3C4E42); color: #ffffff; border-radius: 12px; padding: 2rem; text-align: center; margin: 2rem 0; box-shadow: 0 8px 20px rgba(63, 105, 148, 0.3); }
+        .opportunity-hours { font-size: 4rem; font-weight: 700; line-height: 1; display: block; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: opacity 0.3s ease; z-index: 1000; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        body.modal-active { overflow: hidden; }
+        .modal-content { background-color: #ffffff; padding: 2rem; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); width: 90%; max-width: 550px; text-align: center; transform: translateY(-20px); transition: transform 0.3s ease; }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 1rem; margin-bottom: 1rem; text-align: left;}
+        .close-button { font-size: 1.5rem; font-weight: bold; cursor: pointer; border: none; background: none; }
+        .form-group { margin-bottom: 1rem; text-align: left; }
+        .form-group input, .form-group select { width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
+        .page-view.hidden { display: none; }
+        .content-box { background-color: #ffffff; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 2rem; }
+        .activity-item { display: flex; align-items: center; padding: 1rem 0; border-bottom: 1px solid #f0f0f0; }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-category-dot { width: 15px; height: 15px; border-radius: 50%; margin-right: 1rem; flex-shrink: 0; }
+        .activity-details { flex-grow: 1; }
+        .activity-hours { font-size: 1.1rem; font-weight: 600; margin-right: 1rem; }
+        .activity-actions { display: flex; }
+        .empty-message { text-align: center; padding: 3rem; color: #777; }
+        .category-manager-list { list-style: none; padding: 0; }
+        .category-manager-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-radius: 8px; margin-bottom: 0.5rem; background-color: #f9f9f9; }
+        .add-category-form { display: flex; gap: 0.5rem; margin-top: 1rem; }
+        .goal-setter-form .form-group { display: flex; align-items: center; justify-content: space-between; }
+        .goal-setter-form label { flex-basis: 60%; }
+        .goal-setter-form input { flex-basis: 35%; }
+        .goal-total { text-align: right; font-weight: bold; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; transition: color 0.3s; }
+        .goal-total-warning { color: #e74c3c; }
+        .quote-container { text-align: center; margin: 2rem 0; padding: 1.5rem; background-color: rgba(255,255,255,0.5); border-radius: 12px; }
+        .suggestion-section { text-align: center; margin-top: 2rem; }
+        .suggestion-content { text-align: left; white-space: pre-wrap; font-family: 'Poppins', sans-serif; line-height: 1.6; max-height: 400px; overflow-y: auto; }
+        .spinner { width: 24px; height: 24px; border: 3px solid rgba(0,0,0,0.2); border-radius: 50%; border-top-color: #3F6994; animation: spin 1s ease-in-out infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <nav class="navbar"><div class="nav-brand">The Kingdom Time Audit</div><div class="nav-links"><a id="dashboardLink" class="active">Dashboard</a><a id="reportsLink">Reports</a><a id="settingsLink">Settings</a></div><button class="btn btn-primary" id="addActivityBtn">+ Add Activity</button></nav>
+
+    <main class="container">
+        <!-- Page HTML is unchanged -->
+        <div id="dashboardPage" class="page-view"><header class="page-header"><h1>Hello, Client!</h1><p>Here is your 168-hour breakdown for the week.</p></header><section class="charts-container"><div class="chart-card"><h3>Your Ideal Week (The Blueprint)</h3><div class="chart-canvas-container"><canvas id="idealWeekChart"></canvas></div></div><div class="chart-card"><h3>This Week's Reality (The Compass)</h3><div class="chart-canvas-container"><canvas id="actualWeekChart"></canvas></div></div></section><section class="suggestion-section"><button class="btn btn-secondary" id="getSuggestionsBtn"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path><path d="M5 3v4"></path><path d="M19 17v4"></path><path d="M3 5h4"></path><path d="M17 19h4"></path></svg>Get AI Suggestions</button></section><section class="opportunity-card"><div class="opportunity-content"><span class="opportunity-hours" id="opportunityHours">168</span><h2>Hours of Opportunity</h2><p>This is the time you can use to work on your dreams.</p></div></section><section class="quote-container" id="quoteContainer"></section></div>
+        <div id="reportsPage" class="page-view hidden"><header class="page-header"><h1>Activity Log</h1><p>A detailed list of all your logged activities for the week. Edit or delete entries as needed.</p></header><div id="activityLogContainer" class="content-box"></div></div>
+        <div id="settingsPage" class="page-view hidden">
+             <header class="page-header"><h1>Settings</h1><p>Manage your preferences, categories, and data.</p></header>
+             <div class="content-box"><h2>Set Your Ideal Week</h2><p>Define your goals. How many hours per week do you want to dedicate to each category? The total should be 168.</p><form id="goalSetterForm" class="goal-setter-form"></form></div>
+             <div class="content-box"><h2>Manage Categories</h2><p>Add or remove categories to personalize your tracking.</p><ul id="categoryManagerList" class="category-manager-list"></ul><form id="addCategoryForm" class="add-category-form"><input type="text" id="newCategoryName" placeholder="New category name..." required><button type="submit" class="btn btn-secondary">Add</button></form></div>
+             <div class="content-box"><h2>Data Management</h2><p>This will permanently clear all your logged activities for the week.</p><button id="resetDataBtn" class="btn btn-danger">Reset All Weekly Data</button></div>
+        </div>
+    </main>
+    <!-- Modals HTML unchanged -->
+    <div class="modal-overlay" id="activityModal"><div class="modal-content"><div class="modal-header"><h2 id="modalTitle">Log Your Time</h2><button class="close-button" id="closeModalBtn">&times;</button></div><form id="activityForm"><input type="hidden" id="activityId"><div class="form-group"><label for="activityName">Activity Name (Optional)</label><input type="text" id="activityName" placeholder="e.g., Morning Run, Team Meeting"></div><div class="form-group"><label for="activityCategory">Category</label><select id="activityCategory" required></select></div><div class="form-group"><label for="activityHours">Hours Spent</label><input type="number" id="activityHours" min="0.5" step="0.5" required placeholder="e.g., 2.5"></div><button type="submit" id="modalSubmitBtn" class="btn btn-primary" style="width:100%;">Log Activity</button></form></div></div>
+    <div class="modal-overlay" id="welcomeModal"><div class="modal-content"><h2>Welcome to The Kingdom Time Audit!</h2><p style="margin-top:1rem;">Here's how to get started:</p><ol style="text-align:left;margin:1rem 2rem;"><li>Go to <strong>Settings</strong> to create your own categories and set your weekly goals.</li><li>Click <strong>+ Add Activity</strong> to start logging your time.</li><li>Check the <strong>Reports</strong> tab to see a detailed list of your entries.</li></ol><button id="closeWelcomeBtn" class="btn btn-primary">Let's Get Started!</button></div></div>
+    <div class="modal-overlay" id="suggestionsModal"><div class="modal-content"><div class="modal-header"><h2>AI-Powered Suggestions</h2><button class="close-button" id="closeSuggestionsBtn">&times;</button></div><div id="suggestionContentContainer" class="suggestion-content"></div></div></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+        
+            const DEFAULT_CATEGORIES=['Work','Sleep','Health','Leisure','Personal Growth','Family','Admin'];
+            let appState={categories:[],activities:[],idealHours:{}};
+            const categoryColors={'Work':'#3F6994','Sleep':'#3C4E42','Health':'#BF8F65','Leisure':'#66BCF2','Personal Growth':'#8e44ad','Family':'#e74c3c','Admin':'#7f8c8d'};
+            const KEYS={cat:'kingdomTime_categories_v4',act:'kingdomTime_activities_v4',goal:'kingdomTime_goals_v4',welcome:'kingdomTime_welcomeSeen'};
+            const QUOTES=[{text:"The key is not in spending time, but in investing it.",author:"Stephen R. Covey"},{text:"Lost time is never found again.",author:"Benjamin Franklin"},{text:"Either you run the day or the day runs you.",author:"Jim Rohn"},{text:"The bad news is time flies. The good news is you’re the pilot.",author:"Michael Altshuler"}];
+            
+            let idealChart,actualChart;
+            const ui={quoteContainer:document.getElementById('quoteContainer'),welcomeModal:document.getElementById('welcomeModal'),suggestionsModal:document.getElementById('suggestionsModal'),suggestionContentContainer:document.getElementById('suggestionContentContainer'),getSuggestionsBtn:document.getElementById('getSuggestionsBtn'),categoryManagerList:document.getElementById('categoryManagerList'),addCategoryForm:document.getElementById('addCategoryForm'),goalSetterForm:document.getElementById('goalSetterForm'),idealChartCanvas:document.getElementById('idealWeekChart'),actualChartCanvas:document.getElementById('actualWeekChart'),opportunityHoursEl:document.getElementById('opportunityHours'),activityLogContainer:document.getElementById('activityLogContainer'),resetDataBtn:document.getElementById('resetDataBtn'),modalOverlay:document.getElementById('activityModal'),modalTitle:document.getElementById('modalTitle'),modalSubmitBtn:document.getElementById('modalSubmitBtn'),activityForm:document.getElementById('activityForm'),activityIdInput:document.getElementById('activityId'),navLinks:{dashboard:document.getElementById('dashboardLink'),reports:document.getElementById('reportsLink'),settings:document.getElementById('settingsLink')},pages:{dashboard:document.getElementById('dashboardPage'),reports:document.getElementById('reportsPage'),settings:document.getElementById('settingsPage')}};
+
+            function saveState(){localStorage.setItem(KEYS.act,JSON.stringify(appState.activities));localStorage.setItem(KEYS.cat,JSON.stringify(appState.categories));localStorage.setItem(KEYS.goal,JSON.stringify(appState.idealHours));}
+            function loadState(){appState.activities=JSON.parse(localStorage.getItem(KEYS.act))||[];appState.categories=JSON.parse(localStorage.getItem(KEYS.cat))||[...DEFAULT_CATEGORIES];appState.idealHours=JSON.parse(localStorage.getItem(KEYS.goal))||{};}
+            
+            async function fetchAISuggestions() {
+                ui.suggestionContentContainer.innerHTML = '<div class="spinner"></div><p style="margin-top:1rem;">Coach Wiggins is analyzing your game film...</p>';
+                ui.suggestionsModal.classList.add('active');
+
+                const actualTotals = appState.categories.reduce((acc, cat) => ({...acc,[cat]:0}),{});
+                appState.activities.forEach(act=>{if(actualTotals.hasOwnProperty(act.category))actualTotals[act.category]+=act.hours;});
+
+                try {
+                    const response = await fetch('/.netlify/functions/suggestions', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ idealHours: appState.idealHours, actualTotals })
+                    });
+                    
+                    if (!response.ok) {
+                        // Try to get a more specific error message from the backend if possible
+                        let errorText = `The server responded with status: ${response.status}`;
+                        try {
+                            const errorResult = await response.json();
+                            errorText = errorResult.error || errorText;
+                        } catch (e) {
+                            // The error response itself wasn't JSON, just use the status.
+                        }
+                        throw new Error(errorText);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (!result.suggestion) {
+                        throw new Error("The AI provided an empty or invalid suggestion.");
+                    }
+
+                    ui.suggestionContentContainer.innerHTML = result.suggestion;
+
+                } catch (error) {
+                    console.error("AI Error:", error);
+                    ui.suggestionContentContainer.innerHTML = `<p>Sorry, an error occurred. Please try again later.</p><p style="font-size:0.8rem;color:#777;margin-top:1rem;">Details: ${error.message}</p>`;
+                }
+            }
+            
+            function handleResetData(){if(confirm('Are you sure?')){appState.activities=[];saveState();renderAll();showPage('dashboard');}}
+            function handleAddCategory(e){e.preventDefault();const i=document.getElementById('newCategoryName'),n=i.value.trim();if(n&&!appState.categories.find(c=>c.toLowerCase()===n.toLowerCase())){appState.categories.push(n);saveState();renderAll();}i.value='';}
+            function handleDeleteCategory(c){if(confirm(`Delete "${c}"?`)){appState.categories=appState.categories.filter(cat=>cat!==c);appState.activities=appState.activities.filter(a=>a.category!==c);delete appState.idealHours[c];saveState();renderAll();}}
+            function handleActivityFormSubmit(e){e.preventDefault();const id=parseInt(ui.activityIdInput.value),d={name:document.getElementById('activityName').value||'Unnamed Activity',category:document.getElementById('activityCategory').value,hours:parseFloat(document.getElementById('activityHours').value)};if(id){const i=appState.activities.findIndex(a=>a.id===id);if(i>-1)appState.activities[i]={...appState.activities[i],...d};}else{d.id=Date.now();appState.activities.push(d);}saveState();closeModal();renderAll();}
+            function handleActivityLogClick(e){const t=e.target,id=parseInt(t.closest('.activity-item')?.dataset.id);if(t.matches('.delete-btn')){if(confirm('Delete this activity?')){appState.activities=appState.activities.filter(a=>a.id!==id);saveState();renderAll();}}else if(t.matches('.edit-btn')){const a=appState.activities.find(a=>a.id===id);if(a)openModalForEdit(a);}}
+            function handleGoalFormSubmit(e){e.preventDefault();e.target.querySelectorAll('input').forEach(i=>{appState.idealHours[i.dataset.category]=parseFloat(i.value)||0;});saveState();alert('Goals saved!');renderAll();}
+            function openModalForAdd(){ui.activityForm.reset();ui.activityIdInput.value='';ui.modalTitle.textContent='Log Your Time';ui.modalSubmitBtn.textContent='Log Activity';ui.modalOverlay.classList.add('active');document.body.classList.add('modal-active');}
+            function openModalForEdit(a){ui.activityForm.reset();ui.activityIdInput.value=a.id;document.getElementById('activityName').value=a.name;document.getElementById('activityCategory').value=a.category;document.getElementById('activityHours').value=a.hours;ui.modalTitle.textContent='Edit Activity';ui.modalSubmitBtn.textContent='Save Changes';ui.modalOverlay.classList.add('active');document.body.classList.add('modal-active');}
+            function closeModal(){ui.modalOverlay.classList.remove('active');document.body.classList.remove('modal-active');}
+            function showPage(k){Object.values(ui.pages).forEach(p=>p.classList.add('hidden'));Object.values(ui.navLinks).forEach(l=>l.classList.remove('active'));ui.pages[k].classList.remove('hidden');ui.navLinks[k].classList.add('active');}
+            function displayRandomQuote(){const q=QUOTES[Math.floor(Math.random()*QUOTES.length)];ui.quoteContainer.innerHTML=`<p class="quote-text">"${q.text}"</p><span class="quote-author">- ${q.author}</span>`;}
+            function showWelcomeGuide(){if(!localStorage.getItem(KEYS.welcome)){ui.welcomeModal.classList.add('active');}}
+            function closeWelcomeGuide(){localStorage.setItem(KEYS.welcome,'true');ui.welcomeModal.classList.remove('active');}
+            function renderGoalSetter(){ui.goalSetterForm.innerHTML='';let t=0;appState.categories.forEach(c=>{const g=appState.idealHours[c]||0;t+=g;const f=document.createElement('div');f.className='form-group';f.innerHTML=`<label for="goal-${c}">${c}</label><input type="number" id="goal-${c}" data-category="${c}" value="${g}" min="0" step="0.5">`;ui.goalSetterForm.appendChild(f);});const totalEl=document.createElement('div');totalEl.className='goal-total';totalEl.id='goalTotal';const saveBtn=document.createElement('button');saveBtn.type='submit';saveBtn.className='btn btn-primary';saveBtn.textContent='Save Goals';ui.goalSetterForm.appendChild(totalEl);ui.goalSetterForm.appendChild(saveBtn);const updateTotal=()=>{let r=0;ui.goalSetterForm.querySelectorAll('input').forEach(i=>r+=parseFloat(i.value)||0);totalEl.textContent=`Total Hours: ${r} / 168`;totalEl.classList.toggle('goal-total-warning',r>168);};ui.goalSetterForm.addEventListener('input',updateTotal);updateTotal();}
+            function updateDashboard(){const at={},al=Object.keys(at),ad=Object.values(at);appState.categories.forEach(c=>at[c]=0);appState.activities.forEach(a=>{if(at.hasOwnProperty(a.category))at[a.category]+=a.hours;});const aLabels=Object.keys(at),aData=Object.values(at);if(actualChart){actualChart.data.labels=aLabels;actualChart.data.datasets[0].data=aData;actualChart.data.datasets[0].backgroundColor=aLabels.map(l=>categoryColors[l]||'#ccc');actualChart.update();}ui.opportunityHoursEl.textContent=(168-appState.activities.reduce((s,a)=>s+a.hours,0)).toFixed(1);const il=appState.categories.filter(c=>appState.idealHours[c]>0),id=il.map(c=>appState.idealHours[c]);if(idealChart){idealChart.data.labels=il;idealChart.data.datasets[0].data=id;idealChart.data.datasets[0].backgroundColor=il.map(l=>categoryColors[l]||'#ccc');idealChart.update();}}
+            function initializeCharts(){idealChart=new Chart(ui.idealChartCanvas,{type:'doughnut',data:{labels:[],datasets:[{data:[],hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom'}}}});actualChart=new Chart(ui.actualChartCanvas,{type:'doughnut',data:{labels:[],datasets:[{data:[],hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom'}}}});}
+            function renderActivityLog(){ui.activityLogContainer.innerHTML='';if(appState.activities.length===0){ui.activityLogContainer.innerHTML=`<p class="empty-message">No activities logged yet.</p>`;return;}[...appState.activities].reverse().forEach(a=>{const i=document.createElement('div');i.className='activity-item';i.dataset.id=a.id;i.innerHTML=`<div class="activity-category-dot" style="background-color:${categoryColors[a.category]||'#ccc'};"></div><div class="activity-details"><div class="name">${a.name}</div><div class="category">${a.category}</div></div><div class="activity-hours">${a.hours} hrs</div><div class="activity-actions"><button class="btn btn-secondary btn-small edit-btn">Edit</button><button class="btn btn-danger btn-small delete-btn">Delete</button></div>`;ui.activityLogContainer.appendChild(i);});}
+            function renderCategoryManager(){ui.categoryManagerList.innerHTML='';appState.categories.forEach(c=>{const li=document.createElement('li');li.className='category-manager-item';li.innerHTML=`<span><span class="activity-category-dot" style="background-color:${categoryColors[c]||'#ccc'}"></span>${c}</span><button class="btn btn-danger btn-small">Delete</button>`;li.querySelector('button').onclick=()=>handleDeleteCategory(c);ui.categoryManagerList.appendChild(li);});}
+            function populateCategoryDropdown(){const s=document.getElementById('activityCategory');s.innerHTML='';appState.categories.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;s.appendChild(o);});}
+            function renderAll(){updateDashboard();renderActivityLog();populateCategoryDropdown();renderCategoryManager();renderGoalSetter();}
+
+            // --- INITIALIZATION & EVENT LISTENERS ---
+            loadState();
+            initializeCharts();
+            renderAll();
+            displayRandomQuote();
+            showWelcomeGuide();
+            ui.navLinks.dashboard.addEventListener('click',()=>showPage('dashboard'));ui.navLinks.reports.addEventListener('click',()=>showPage('reports'));ui.navLinks.settings.addEventListener('click',()=>showPage('settings'));
+            ui.resetDataBtn.addEventListener('click',handleResetData);ui.addCategoryForm.addEventListener('submit',handleAddCategory);ui.goalSetterForm.addEventListener('submit',handleGoalFormSubmit);
+            document.getElementById('addActivityBtn').addEventListener('click',openModalForAdd);document.getElementById('closeModalBtn').addEventListener('click',closeModal);ui.activityForm.addEventListener('submit',handleActivityFormSubmit);ui.activityLogContainer.addEventListener('click',handleActivityLogClick);
+            document.getElementById('closeWelcomeBtn').addEventListener('click',closeWelcomeGuide);
+            ui.getSuggestionsBtn.addEventListener('click',fetchAISuggestions);
+            document.getElementById('closeSuggestionsBtn').addEventListener('click',()=>ui.suggestionsModal.classList.remove('active'));
+        });
+    </script>
+
+</body>
+</html>
